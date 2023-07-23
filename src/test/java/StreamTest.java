@@ -1,6 +1,7 @@
 import org.junit.Test;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -138,6 +139,139 @@ public class StreamTest {
         System.out.println(listNew);
     }
 
+    /**
+     * reduce：归约，把一个流缩减成一个值，对集合实现求和，求乘积等操作
+     */
+    @Test
+    public void test4(){
+        List<Integer> list = Arrays.asList(1, 3, 2, 8, 11, 4);
+        StreamTest.createPersonList();
+
+        //求集合的和方式1
+        Optional<Integer> sum1 = list.stream().reduce((x, y) -> x + y);
+        //求和方式2
+        Optional<Integer> sum2 = list.stream().reduce(Integer::sum);
+        //求和方式3
+        Integer sum3 = list.stream().reduce(0, Integer::sum);
+
+        //求最大值1
+        Optional<Integer> max1 = list.stream().reduce((x, y) -> x > y ? x : y);
+        //求最大值2
+        Integer max2 = list.stream().reduce(0, Integer::max);
+
+        //求乘积
+        Optional<Integer> product  = list.stream().reduce((x, y) -> x * y);
+
+        //求员工工资之和
+        Optional<Integer> sum4 = personList.stream().map(Person::getSalary).reduce(Integer::sum);
+        //求员工工资之和
+        personList.stream().reduce(0,(sum,p)-> sum+=p.getSalary(),Integer::sum);
+        //求员工工资之和
+        personList.stream().reduce(0,(sum,p)-> sum+=p.getSalary(),(sum5,sum6)-> sum5+sum6);
+
+        //求员工工资最高
+        Optional<Integer> max3 = personList.stream().map(Person::getSalary).reduce(Integer::max);
+
+    }
+
+    /**
+     * collect 收集，将一个流收集起来，最终可以是一个流也可以是一个值
+     * 归集(toList/toSet/toMap)： 将一个流转换成另一个流
+     */
+    @Test
+    public void test5(){
+        List<Integer> list = Arrays.asList(1, 6, 3, 4, 6, 7, 9, 6, 20);
+        //找出所有偶数并封装成list返回
+        List<Integer> collect = list.stream().filter(x -> x % 2 == 0).collect(Collectors.toList());
+        //找出所有偶数并封装成set返回
+        Set<Integer> collect1 = list.stream().filter(x -> x % 2 == 0).collect(Collectors.toSet());
+
+        StreamTest.createPersonList();
+        // 将员工名字封装成list返回
+        List<String> collect2 = personList.stream().map(Person::getName).collect(Collectors.toList());
+
+        //将员工信息转成map，key是员工姓名
+        Map<String, Person> collect3 = personList.stream().collect(Collectors.toMap(Person::getName, e -> e));
+        // 与上面等价
+        Map<String, Person> collect4 = personList.stream().collect(Collectors.toMap(Person::getName, Function.identity()));
+
+        System.out.println(collect);
+        System.out.println(collect1);
+        System.out.println(collect2);
+        System.out.println(collect3);
+        System.out.println(collect4);
+    }
+
+    /**
+     * 计数：count
+     * 平均值：averagingInt、averagingLong、averagingDouble
+     * 最值：maxBy、minBy
+     * 求和：summingInt、summingLong、summingDouble
+     * 统计以上所有：summarizingInt、summarizingLong、summarizingDouble
+     */
+    @Test
+    public void test6(){
+        StreamTest.createPersonList();
+
+        //求薪资大于8000，员工总数
+        Long collect = personList.stream().filter(x -> x.getSalary() > 8000).collect(Collectors.counting());
+
+        //求最高工资
+        Optional<Integer> collect1 = personList.stream().map(Person::getSalary).collect(Collectors.maxBy(Integer::compare));
+
+        //一次性统计所有信息
+        DoubleSummaryStatistics collect2 = personList.stream().collect(Collectors.summarizingDouble(Person::getSalary));
+        // DoubleSummaryStatistics{count=6, sum=49300.000000, min=7000.000000, average=8216.666667, max=9500.000000}
+        System.out.println(collect2);
+        //打印最大值，9500.0
+        System.out.println(collect2.getMax());
+    }
+
+    /**
+     * 分区：将stream按条件分为两个Map，比如员工按薪资是否高于8000分为两部分。
+     * 分组：将集合分为多个Map，比如员工按性别分组。有单级分组和多级分组。
+     */
+    @Test
+    public void test7(){
+        StreamTest.createPersonList();
+
+        //根据年龄给 员工分组
+        Map<Integer, List<Person>> collect = personList.stream().collect(Collectors.groupingBy(Person::getAge));
+        //根据薪资是否超过8000分区
+        Map<Boolean, List<Person>> collect1 = personList.stream().collect(Collectors.partitioningBy(x -> x.getSalary() > 8000));
+        //根据薪资是否超过8000分组
+        Map<Boolean, List<Person>> collect2 = personList.stream().collect(Collectors.groupingBy(x -> x.getSalary() > 8000));
+        //先根据性别，再根据地区分组
+        Map<String, Map<String, List<Person>>> collect3 = personList.stream().collect(Collectors.groupingBy(Person::getSex, Collectors.groupingBy(Person::getArea)));
+
+        System.out.println(collect);
+        System.out.println(collect1);
+        System.out.println(collect2);
+        System.out.println(collect3);
+    }
+
+    /**
+     * joining可以将stream中的元素用特定的连接符（没有的话，则直接连接）连接成一个字符串。
+     */
+    @Test
+    public void test8(){
+        StreamTest.createPersonList();
+
+        //使用 - 将员工姓名拼接在一起:Tom-Jack-Lily-Anni-Owen-Alisa
+        String collect = personList.stream().map(Person::getName).collect(Collectors.joining("-"));
+
+        // 注意这里必须是string，由于salary是int，所以需要转成string
+        String collect1 = personList.stream().map(x -> {
+            return String.valueOf(x.getSalary());
+        }).collect(Collectors.joining(","));
+
+        //TomJackLilyAnniOwenAlisa
+        String collect2 = personList.stream().map(Person::getName).collect(Collectors.joining());
+
+        System.out.println(collect);
+        System.out.println(collect1);
+        System.out.println(collect2);
+    }
 
 
      //初始化personlist
