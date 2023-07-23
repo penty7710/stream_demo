@@ -18,10 +18,13 @@ public class StreamTest {
      * findFirst：返回流中的第一个元素
      * findAny： 返回流中的任意一个元素
      * anyMatch：检查流中是否至少有一个元素匹配，返回bool
+     * limit：返回一个不超过给定长度的流
+     * distinct：去重
+     * skip：返回一个跳过前几个元素的流
      */
     @Test
     public void test1(){
-         List<Integer> list = Arrays.asList(7, 6, 9, 3, 8, 2, 1);
+         List<Integer> list = Arrays.asList(7, 6, 9, 3, 8, 2, 1,6);
          StreamTest.createPersonList();
 
 
@@ -42,6 +45,13 @@ public class StreamTest {
          //是否存在大于6的元素
          boolean b = list.stream().anyMatch(x -> x > 6);
          System.out.println("是否存在大于6的元素:"+b);
+
+         //输出不重复的元素
+         list.stream().distinct().forEach(System.out::println);
+         //从第四个元素开始输出
+         list.stream().skip(3).forEach(System.out::println);
+         //输出前3个元素
+         list.stream().limit(3).forEach(System.out::println);
      }
 
     /**
@@ -89,6 +99,7 @@ public class StreamTest {
      * map：接收一个函数作为参数，该函数会被应用到每个元素上，并将其映射成一个新的元素
      * flatMap：：接收一个函数作为参数，将流中的每个值都换成另一个流，然后把所有流连接成一个流。
      * mapToInt、mapToDouble、mapToLong：将对象流转换成对应的数值流
+     * peek：对元素进行遍历
      */
     @Test
      public void test3(){
@@ -116,6 +127,10 @@ public class StreamTest {
              x.setSalary(x.getSalary()+1000);
              return x;
          }).forEach(System.out::println);
+
+        personList.stream().peek(x -> {
+            x.setSalary(x.getSalary()+1000);
+        }).forEach(System.out::println);
 
          //求工资之和
         int sum = personList.stream().mapToInt(x -> {
